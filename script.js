@@ -1,11 +1,33 @@
 function Gameboard(){
+    const score01 = document.getElementById('score01');
+    const score02 = document.getElementById('score02');
+    let points01 = 0;
+    let points02 = 0;
     const rows = 3;
     const cols = 3;
-    const board = Array.from({ length: rows }, () => Array.from({ length: cols }, Cell));
+
+    let board;
+
+    const createBoard = (delayVariable) => {
+        if(delayVariable){
+            console.log('dalay');
+            setTimeout(() => {
+                board = Array.from({ length: rows }, () => Array.from({ length: cols }, Cell));
+                gameScreen().updateScreen();
+                return board;
+                }, 1000);
+        } else {
+            console.log('normal');
+            board = Array.from({ length: rows }, () => Array.from({ length: cols }, Cell));
+            return board;
+        }
+    };
+
+    createBoard();
     
     const dropToken = (row, column, player) => {
         const availableCell = board[row][column].getValue();
-        return availableCell === 0 ? (board[row][column].addToken(player), true) : false;
+        return typeof availableCell === 'undefined' ? (board[row][column].addToken(player), true) : false;
     };
 
     const printBoard = () => {
@@ -13,29 +35,43 @@ function Gameboard(){
         return boardCellValues;
     };
 
-    const checkWinner = (boardValue) => {
-        const checkLine = (a, b, c) => a !== 0 && a === b && b === c;
+    const checkWinner = (boardValue, winner) => {
+        const checkLine = (a, b, c) => typeof a !== 'undefined' && a === b && b === c;
         for (let i = 0; i < 3; i++) {
             if (checkLine(boardValue[i][0], boardValue[i][1], boardValue[i][2]) ||
                 checkLine(boardValue[0][i], boardValue[1][i], boardValue[2][i])) {
+                    if(winner == "X"){
+                        score01.textContent = ++points01;
+                    } else {
+                        score02.textContent = ++points02;
+                    }
+                    createBoard('delayVariable');
                 return true;
             }
         }
     
         if (checkLine(boardValue[0][0], boardValue[1][1], boardValue[2][2]) ||
             checkLine(boardValue[0][2], boardValue[1][1], boardValue[2][0])) {
-            return true;
+                if(winner == "X"){
+                    score01.textContent = ++points01;
+                } else {
+                    score02.textContent = ++points02;
+                }
+                    createBoard('delayVariable');
+                return true;
         }
         return false;
     }
 
-    const getBoard = () => board;
+    const getBoard = () => {
+        return board;
+    };
 
-    return {printBoard, dropToken, checkWinner, getBoard};
+    return {printBoard, dropToken, checkWinner, getBoard, createBoard};
 }
 
 function Cell() {
-   let value = 0;
+   let value;
 
    const addToken = (player) => {
     value = player;
@@ -66,6 +102,7 @@ function gamePlayers(playerOne = 'One', playerTwo = 'Two') {
 function gameController() {
     const board = Gameboard();
     const player = gamePlayers();
+
     let roundCounter = 0;
 
     let activePlayer = player[0];
@@ -89,21 +126,21 @@ function gameController() {
             return;
         }
     
-        if (board.checkWinner(board.printBoard())) {
+        if (board.checkWinner(board.printBoard(), activePlayer.token)) {
             console.log(`${activePlayer.name} won`);
-            console.log(board.printBoard());
-            gameScreen().score(activePlayer);
-            return;
+            roundCounter = 0;
+            return activePlayer.token;
         }
     
         if (roundCounter === 8) {
-            console.log('tie');
-            return;
+            board.createBoard('delayVariable');
+            roundCounter = 0;
+            return 'tie';
         }
     
         switchPlayer();
         newRound();
-        ++roundCounter;
+        roundCounter++;
     };
 
     newRound();
@@ -111,23 +148,17 @@ function gameController() {
     return {
         playRound,
         getActivePlayer,
+        switchPlayer,
         getBoard: board.getBoard
     };
 }
 
 function gameScreen (){
-    let points01 = 0;
-    let points02 = 0;
     const game = gameController();
     const boardDiv = document.getElementById('cellbox');
 
     const resetButton = document.getElementById('buttonreset');
     resetButton.addEventListener('click', function () {location.reload()});
-
-    // const deleteScreen = () => {
-    //     const divs = document.getElementsByClassName('cell');
-    //     Array.from(divs).forEach(div => div.remove());
-    // }
 
     const updateScreen = () => {
         boardDiv.textContent = "";
@@ -147,34 +178,56 @@ function gameScreen (){
 
     function clickHandlerBoard(e) {
         const selectedCell = e.target.dataset.rowColumn.split('').filter(comma => comma !== ',');
-        console.log(selectedCell[0], selectedCell[1]);
         if(!selectedCell) return;
 
-        game.playRound(selectedCell[0], selectedCell[1]);
-        updateScreen();
+       switch(game.playRound(selectedCell[0], selectedCell[1])) {
+        case 'X': document.getElementById('sidebar01').style.backgroundColor = 'green';
+            setTimeout(() => {
+                document.getElementById('sidebar01').style.backgroundColor = '';
+                boardDiv.addEventListener('click', clickHandlerBoard);
+            }, 1000);
+            boardDiv.removeEventListener('click', clickHandlerBoard);
+            updateScreen();
+            break;
+
+        case 'O': document.getElementById('sidebar02').style.backgroundColor = 'green';
+            setTimeout(() => {
+                document.getElementById('sidebar02').style.backgroundColor = '';
+                boardDiv.addEventListener('click', clickHandlerBoard);
+            }, 1000);
+            boardDiv.removeEventListener('click', clickHandlerBoard);
+            game.switchPlayer();
+            updateScreen();
+            break;
+
+        case 'tie': document.getElementById('sidebar02').style.backgroundColor = 'grey';
+            document.getElementById('sidebar01').style.backgroundColor = 'grey';
+            setTimeout(() => {
+                document.getElementById('sidebar01').style.backgroundColor = '';
+                document.getElementById('sidebar02').style.backgroundColor = '';
+                boardDiv.addEventListener('click', clickHandlerBoard);
+            }, 1000);
+            boardDiv.removeEventListener('click', clickHandlerBoard);
+            updateScreen();
+            break;
+
+        default: updateScreen();
+       }
+            
+        
     }
 
-    const score = (winnerPlayer) => {
-        const score01 = document.getElementById('score01');
-        const score02 = document.getElementById('score02');
-            if(winnerPlayer.token === 'X'){
-                points01 = points01++;
-                score01.textContent = points01;
-                console.log('x ganho')
-                updateScreen();
-                return;
-            } else {
-                score02.textContent = points02++;
-                console.log('O ganho');
-                return updateScreen;
-            }
+    if(!gameScreen.done){
+        boardDiv.addEventListener('click', clickHandlerBoard);
+        gameScreen.done = true;
     }
-
-    boardDiv.addEventListener('click', clickHandlerBoard);
 
     updateScreen();
 
-    return {score};
+    return { 
+        clickHandlerBoard,
+        updateScreen
+    };
 }
 
 gameScreen();

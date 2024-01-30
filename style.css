@@ -30,7 +30,18 @@ main {
     border: 1px solid red;
     aspect-ratio: 1/1;
     cursor: pointer;
-    font-size: 10vw;
+    font-size: 9vw;
+    display: flex ;
+    justify-content: center;
+    align-items: center;
+}
+.cell-disabled {
+    flex: 1 0 calc(33.33%);
+    box-sizing: border-box;
+    border: 1px solid red;
+    aspect-ratio: 1/1;
+    background-color: grey;
+    font-size: 9vw;
     display: flex ;
     justify-content: center;
     align-items: center;
