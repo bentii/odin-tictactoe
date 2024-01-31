@@ -154,6 +154,7 @@ function gameController() {
 }
 
 function gameScreen (){
+    let idCounter = 0;
     const game = gameController();
     const boardDiv = document.getElementById('cellbox');
 
