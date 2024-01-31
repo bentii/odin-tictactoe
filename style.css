@@ -157,4 +157,7 @@ main {
         border-left: 0px solid rgb(220, 220, 220);
         margin-left: 0px;
     }
+    #score01, #score02 {
+        border-top: 0px solid rgb(220, 220, 220);
+    }
 }
